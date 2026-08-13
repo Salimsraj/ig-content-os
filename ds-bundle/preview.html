@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Brand kit preview</title>
+<link rel="stylesheet" href="./styles.css">
+<style>
+  body { margin:0; padding:40px; }
+  .swatches { display:flex; gap:16px; margin-bottom:40px; flex-wrap:wrap; }
+  .swatch { width:140px; }
+  .swatch .box { height:100px; border-radius:12px; border:1px solid rgba(0,0,0,0.08); }
+  .swatch .label { font-size:12px; margin-top:8px; }
+  .swatch .hex { font-size:11px; opacity:0.6; }
+  .type-demo { padding:32px; border-radius:16px; margin-bottom:24px; }
+  h1.serif { font-size:40px; margin:0 0 8px; line-height:1.05; letter-spacing:-0.5px; }
+  p.sans { font-size:15px; margin:0; }
+</style>
+</head>
+<body>
+  <h2 class="sans">Palette</h2>
+  <div class="swatches">
+    <div class="swatch"><div class="box" style="background:#CC785C"></div><div class="label sans">brand-primary</div><div class="hex sans">#CC785C</div></div>
+    <div class="swatch"><div class="box" style="background:#E8A489"></div><div class="label sans">brand-light</div><div class="hex sans">#E8A489</div></div>
+    <div class="swatch"><div class="box" style="background:#9C5A42"></div><div class="label sans">brand-dark</div><div class="hex sans">#9C5A42</div></div>
+    <div class="swatch"><div class="box" style="background:#F0EEE6;border:1px solid #ddd"></div><div class="label sans">light-bg</div><div class="hex sans">#F0EEE6</div></div>
+    <div class="swatch"><div class="box" style="background:#E3DFD3"></div><div class="label sans">light-border</div><div class="hex sans">#E3DFD3</div></div>
+    <div class="swatch"><div class="box" style="background:#1A1918"></div><div class="label sans">dark-bg</div><div class="hex sans">#1A1918</div></div>
+  </div>
+
+  <h2 class="sans">Type on light</h2>
+  <div class="type-demo" style="background:#F0EEE6;color:#1A1918;">
+    <h1 class="serif">Write Better Hooks</h1>
+    <p class="sans">Montserrat for headlines, Inter for body copy. Standard, familiar carousel fonts.</p>
+  </div>
+
+  <h2 class="sans">Type on dark</h2>
+  <div class="type-demo" style="background:#1A1918;color:#F0EEE6;">
+    <h1 class="serif" style="color:#E8A489;">The Hook Decides<br>The Swipe</h1>
+    <p class="sans">Accent color pulled from brand-light against the dark background.</p>
+  </div>
+
+  <h2 class="sans">Gradient</h2>
+  <div class="type-demo" style="background:linear-gradient(165deg, #9C5A42 0%, #CC785C 50%, #E8A489 100%); color:#fff;">
+    <h1 class="serif">Comment "READY"</h1>
+    <p class="sans">and I'll DM you the build.</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:3000/api/instagram-content)",
+      "Bash(python3 -c \"import json, sys; data = json.load\\(sys.stdin\\); post = data['topPosts'][0]; print\\(f'Impressions: {post[\\\\\"impressions\\\\\"]}'\\); print\\(f'Reach: {post[\\\\\"reach\\\\\"]}'\\); print\\(f'Plays: {post[\\\\\"plays\\\\\"]}'\\)\")",
+      "Bash(curl -s http://localhost:3000/api/instagram-insights)",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}

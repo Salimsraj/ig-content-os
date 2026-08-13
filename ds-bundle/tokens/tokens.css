@@ -1,0 +1,18 @@
+/* Carousel design tokens — "Claude-style": warm terracotta orange + creamy off-white */
+
+:root {
+  /* Brand color system */
+  --brand-primary: #CC785C;   /* main accent: progress bar, icons, tags */
+  --brand-light:   #E8A489;   /* secondary accent: tags on dark, pills */
+  --brand-dark:    #9C5A42;   /* CTA text, gradient anchor */
+
+  --light-bg:      #F0EEE6;   /* creamy off-white — light slide background */
+  --light-border:  #E3DFD3;   /* dividers on light slides */
+  --dark-bg:       #1A1918;   /* near-black, warm tint — dark slide background */
+
+  --brand-gradient: linear-gradient(165deg, var(--brand-dark) 0%, var(--brand-primary) 50%, var(--brand-light) 100%);
+
+  /* Typography */
+  --font-display: 'Montserrat', sans-serif; /* headlines — standard bold sans, common across IG carousels */
+  --font-mono:    'Inter', sans-serif;      /* body, labels, tags */
+}

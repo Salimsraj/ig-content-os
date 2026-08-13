@@ -1,0 +1,13 @@
+/* Carousel design system stylesheet — imports fonts + tokens */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('./tokens/tokens.css');
+
+.serif { font-family: var(--font-display); font-weight: 800; }
+.sans  { font-family: var(--font-mono); }
+
+body {
+  font-family: var(--font-mono);
+  background: var(--light-bg);
+  color: var(--dark-bg);
+}

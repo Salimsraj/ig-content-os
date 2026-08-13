@@ -1,0 +1,34 @@
+{
+  "18387431842206550": {
+    "fetchedAt": 1785831772863,
+    "hookHash": "-804861245",
+    "result": {
+      "rewrittenHook": "بعت هاد البرومبت ل Claude وطلعلي LinkedIn banner بجيب عملاء ب60 ثانية بس، من دون ما احرك اصبع.",
+      "principle": "الأصل بيبلش عام (context مفكك وممطوط) والclaim الجريء يجي بدون proof سريع؛ الريرايت بيفتح بنتيجة محددة (60 ثانية، banner فعلي) كإثبات فوري قبل ما الشك يتكون."
+    }
+  },
+  "18125589745778555": {
+    "fetchedAt": 1786012797567,
+    "hookHash": "-1398595764",
+    "result": {
+      "rewrittenHook": "جبت أول 100 عميل لصفتور جديد بدون ما أدفع فلس على Ads، بس باستخدام 4 tools مختلفة عن اللي كل الناس تستعملها.",
+      "principle": "Context/specificity was buried under a list of five tool-names with no result stated first, so the rewrite leads with a concrete outcome (100 عميل, بدون فلس) before naming the mechanism, giving the viewer a reason to keep watching for 'how'."
+    }
+  },
+  "18208768486349631": {
+    "fetchedAt": 1785830749099,
+    "hookHash": "-2055374497",
+    "result": {
+      "rewrittenHook": "لقيت تول اسمه Vibe Prospecting ربطته بكلود ببرومت واحد بس، وطلعلي كل الشركات اللي مستعدة تدفع وتشتغل معي كفاوندر لساس",
+      "principle": "الأصل ضل يلف حوالين الفايدة العامة (context عام) قبل ما يفتح الكونتراست الحقيقي؛ الريرايت بيبدأ بأكشن ملموس (لقيت تول + ربطته ببرومت واحد) وبيوصل بسرعة للنتيجة المحددة (شركات جاهزة تدفع)، يعني الكونتراست بين 'برومت واحد بسيط' و'نتيجة كبيرة محددة' بيصير واضح بأول جملة."
+    }
+  },
+  "18081592229690337": {
+    "fetchedAt": 1785717587658,
+    "hookHash": "-66390239",
+    "result": {
+      "rewrittenHook": "خليتني اعطي كلاود اسم منافس واحد وبس 5 دقايق فك لي المنتج تبعه، ال landing pages، وحتى استراتيجية التسعير - كل هاد بسكيل واحد جديد ببلاش.",
+      "principle": "Weakest lever was contrast (buried under mechanism explanation); rewrite opens with a concrete before/after result (name a competitor -> 5 min full breakdown) so the gap is felt immediately instead of explained."
+    }
+  }
+}
