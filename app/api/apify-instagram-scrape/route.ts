@@ -43,9 +43,23 @@ export async function GET(request: Request) {
       return Response.json({ error: "Failed to scrape Instagram" }, { status: 500 });
     }
 
-    const items = await runResponse.json();
+    const items: any[] = (await runResponse.json()) || [];
 
-    const rawPosts = (items || []).map((item: any) => {
+    interface RawPost {
+      id: string;
+      type: string;
+      caption: string;
+      thumbnail: string;
+      videoUrl: string;
+      likes: number;
+      comments: number;
+      views: number;
+      url: string;
+      timestamp: string;
+      engagementScore: number;
+    }
+
+    const rawPosts: RawPost[] = items.map((item: any) => {
       const views = item.videoViewCount || item.videoPlayCount || 0;
       const likes = item.likesCount || 0;
       const comments = item.commentsCount || 0;
