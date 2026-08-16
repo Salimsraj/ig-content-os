@@ -42,9 +42,27 @@ preferences below are cross-applicable regardless; ask before assuming the *spec
   timing, explicit exclusions like "no text, no particles, no glowing effects") should be followed
   exactly, not loosely interpreted.
 
+## Clean cut / dead-air tolerance for talking-head footage (confirmed, from real raw→edited training pairs)
+
+Sourced 2026-08-16 from 2 real raw/edited training pairs Salim provided and analyzed frame-by-frame +
+via objective silence-detection (not transcript alone). Full detail, per-video comparison, and confidence
+levels for every finding: `knowledge/clean-cut-playbook.md` — read that before any clean-cut decision,
+this is just the durable headline.
+
+- **Preserve natural pauses of ~0.15s–0.46s** between phrases/sentences (measured directly from both
+  final edits — every remaining internal silence fell in this exact range).
+- **Remove gaps of ~0.6s or longer entirely** (confirmed: both raw files had multiple silence stretches
+  from 0.6s up to 9.8s that don't survive into the edit at all).
+- **Overall editing is aggressive**: only ~26-32% of raw duration survives into the final cut across both
+  examples — most raw footage (false starts, retries, dead air) gets discarded, not lightly trimmed.
+- **Opening/hook lines get retried the most** — both examples show the heaviest concentration of
+  restarts/retakes at the very start of the raw footage, before settling into longer continuous delivery.
+- **Not yet confirmed** (don't assume): which specific take gets selected among near-identical repeats,
+  how filler words/breaths are handled distinctly from pauses, or the exact boundary between "keep" and
+  "cut" in the ~0.46-0.6s zone (no example fell there). See the playbook for what would resolve these.
+
 ## Still open
 
-Cut pacing / dead-air tolerance for straight talking-head footage (as opposed to the motion-graphics
-examples above), punch-in/zoom conventions, B-roll usage patterns, music/audio treatment. To be captured
-as `video-editor` (Phase 4) runs in the hybrid edit-plan-for-approval mode (D.4) and real preferences get
-confirmed repeatedly.
+Punch-in/zoom conventions, B-roll usage patterns, music/audio treatment, and take-selection criteria (see
+`clean-cut-playbook.md` #1-2) remain open — to be captured as `video-editor` (Phase 4) runs in the hybrid
+edit-plan-for-approval mode (D.4) and real preferences get confirmed repeatedly.

@@ -98,22 +98,44 @@ Always read the transcript and sanity-check it before building anything on top o
 
 ## V1 Pipeline
 
+**Stage grouping** (Salim's required explicit stages — Clean Cut always completes, and ideally gets
+reviewed, before Creative Edit begins; don't blend them into one pass):
+
+`RAW (1-2) → Clean Cut (3-5) → Creative Edit (6, 9-10) → Captions/Motion (7) → Audio (11) → QA (12-15) → Final (16)`
+
 1. **Inspect raw footage.** `ffprobe` every file — duration, resolution, fps, codec, audio
    presence/channels. This is what step 12 of the QA section verifies against, so record it.
 2. **Transcribe/align.** `hyperframes transcribe` on the raw audio/video per the language rule above.
-   Quality-check the transcript before proceeding (see media-use's transcript-handling guide).
-3. **Map footage to script beats.** This is judgment, not a formula: for each beat's spoken line, locate
-   where it was actually said in the raw footage's transcript (there may be multiple takes — pick the best
-   one, note why). The transcript gives real timing; the script gives the source-of-truth text.
+   Quality-check the transcript before proceeding (see media-use's transcript-handling guide) — **whisper
+   can genuinely hallucinate a repetition loop on raw footage with long silences/multiple takes**,
+   confirmed for real during Salim's training-pair analysis (2026-08-16): both `small` and `medium`
+   models got stuck repeating the same phrase in an unnaturally exact, mechanical cycle for 100+ seconds.
+   A basic quality check (looking for `♪`/garbled tokens) misses this — also check for an n-gram that
+   repeats far more than a real retake pattern would (e.g. the same 4-word phrase appearing more than
+   ~3-5 times) and cross-verify against `ffmpeg silencedetect` (objective, ASR-independent) and real
+   frames before trusting a raw transcript's word-level detail.
+3. **CLEAN CUT — map footage to script beats and select takes.** This is judgment, not a formula: for
+   each beat's spoken line, locate where it was actually said in the raw footage (there may be multiple
+   takes — pick the best one). Read `knowledge/clean-cut-playbook.md` before doing this — it has
+   real, measured thresholds from Salim's own past edits, not defaults. Known limitation as of V1: take
+   *selection* criteria (why one take beats another) isn't confirmed yet — when genuinely unsure, prefer
+   the least risky choice and flag the uncertainty rather than guessing a reason.
 4. **Create the Edit Decision List** (`edl.json` + `edl.md`) — see format below. Do this *before* cutting
-   anything; the EDL is the plan, not a byproduct of already having edited.
-5. **Identify silence/dead-air/mistakes.** From transcript word-gaps (flag gaps over ~0.6-0.8s) and
-   filler/false-start patterns the agent reads directly. Feeds the EDL's silence-removal field and becomes
-   `transcript-cut.mjs`'s `--remove`/`--remove-fillers`/`--cut-silence` arguments.
-6. **Propose visual treatment per beat.** Per the motion-over-text philosophy below, informed by the
-   script's own `> Visual:` hints (Phase 3) and any reference video's real, inspected characteristics.
-7. **Captions.** Build the word-level pill overlay from the APPROVED SCRIPT TEXT, timed via alignment to
-   the real ASR timestamps from step 2 — see the Captions section below. This is non-negotiable.
+   anything; the EDL is the plan, not a byproduct of already having edited. This closes out Clean Cut —
+   the EDL's cut/silence-removal decisions should be reviewable/approvable before Creative Edit begins.
+5. **Identify silence/dead-air/mistakes.** Per `knowledge/clean-cut-playbook.md`: **preserve pauses of
+   ~0.15-0.46s** (measured from real edits — this is natural speech rhythm, not a miss), **remove gaps of
+   ~0.6s or longer entirely**. The ~0.46-0.6s zone has no supporting evidence yet — treat it as a judgment
+   call, not a hard rule. Also flag filler/false-start patterns the agent reads directly (take-selection
+   confidence is still low here, per the playbook — don't invent a selection reason). Feeds the EDL's
+   silence-removal field and becomes `transcript-cut.mjs`'s `--remove`/`--remove-fillers`/`--cut-silence`
+   arguments.
+6. **CREATIVE EDIT — propose visual treatment per beat.** Per the motion-over-text philosophy below,
+   informed by the script's own `> Visual:` hints (Phase 3) and any reference video's real, inspected
+   characteristics.
+7. **CAPTIONS/MOTION.** Build the word-level pill overlay from the APPROVED SCRIPT TEXT, timed via
+   alignment to the real ASR timestamps from step 2 — see the Captions section below. This is
+   non-negotiable.
 8. **Cuts/pacing.** Execute via `transcript-cut.mjs` (silence/filler removal) plus explicit `ffmpeg -ss/-to`
    trims + concat for creative cuts beyond silence removal. **`-c copy` trims snap to the nearest keyframe,
    not the requested timestamp** — confirmed by a real Phase 4 QA failure: a `-c copy` trim requested at
