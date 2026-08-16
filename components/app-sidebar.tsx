@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutGrid,
   ScrollText,
-  BarChart3,
   Calendar,
   Image,
   Users,
@@ -27,7 +26,6 @@ const navItems = [
   { title: "نظرة عامة", url: "/", icon: LayoutGrid },
   { title: "مكتبة السكريبتات", url: "/scripts", icon: ScrollText },
   { title: "المحتوى", url: "/content", icon: Image },
-  { title: "التحليلات", url: "/analytics", icon: BarChart3 },
   { title: "التقويم", url: "/calendar", icon: Calendar },
   { title: "Creators", url: "/competitors", icon: Users },
   { title: "مصادر إلهام", url: "/inspiration", icon: Sparkles },

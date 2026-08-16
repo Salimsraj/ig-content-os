@@ -37,8 +37,11 @@ yarn-error.log*
 # vercel
 .vercel
 
-# local follower tracking snapshots
-/data/*.json
+# regenerable scrape/AI-call caches (not source data)
+/data/cache/
+
+# live-updating local state (daily snapshot, no generator — future Supabase migration candidate)
+/data/follower-history.json
 
 # typescript
 *.tsbuildinfo
