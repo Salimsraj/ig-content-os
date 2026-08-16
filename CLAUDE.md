@@ -77,10 +77,11 @@ Both agents invoke the `hook-craft` skill as their first step — don't duplicat
 when routing; just dispatch to the right agent with the relevant context (the idea, the hook(s) in
 question, any script/description available).
 
-Note: as of Phase 2, `hook-generator` is confirmed natively discoverable as an agent type;
-`hook-analyzer` was not yet discoverable in the same session it was created in (unresolved harness-timing
-quirk, not a defect found in the file itself — re-check each new session; fall back to loading
-`.claude/agents/hook-analyzer.md` via `general-purpose` if native dispatch still fails).
+Note: `hook-generator`, `hook-analyzer`, and `reel-script-writer` are all now confirmed natively
+discoverable as agent types (each took one extra session after creation to register — confirmed
+throttled/incremental discovery on the harness side, not a defect in the files). Expect the same one-session
+lag for `video-editor`, created this phase — fall back to loading `.claude/agents/video-editor.md` via
+`general-purpose` if native dispatch isn't available yet.
 
 ## Routing: script requests (Phase 3)
 
@@ -94,6 +95,25 @@ quirk, not a defect found in the file itself — re-check each new session; fall
 
 `reel-script-writer` invokes the `reel-script-writing` skill as its first step. It writes from an
 already-selected hook — it doesn't generate or pick hooks itself.
+
+## Routing: video-editing requests (Phase 4)
+
+| Salim says (examples) | Route to | What it means |
+|---|---|---|
+| "Edit this video" | `video-editor` | Full pipeline: inspect → transcribe → EDL → cut → caption → render → QA |
+| "Edit this using this Reel as reference" | `video-editor` | Same, with reference-video inspection informing decisions (see skill) |
+| "Make the pacing faster" / "keep the hook but redo the middle" | `video-editor` | Revision — touch only the affected beats/stages, not a full rebuild |
+| "Add captions" | `video-editor` | Captions stage only, on an already-cut edit |
+| "Prepare this for Instagram" / "render the final version" | `video-editor` | Render + mandatory QA, skipping straight there if an approved EDL/edit already exists |
+| "Use my normal editing style" | `video-editor` | Reads `knowledge/video-editing-style.md` — say plainly if it's still thin on a given decision rather than inventing a style |
+
+`video-editor` invokes the `video-editing-workflow` skill as its first step. It's the only content agent
+so far with `Bash`/`Write` access — video editing means running real commands (ffmpeg, ffprobe,
+hyperframes transcribe) against real files, unlike the pure-text hook/script agents.
+
+**No real raw footage exists in this repo as of Phase 4.** Until Salim provides some, `video-editor`
+should validate architecture/tooling/EDL generation honestly rather than claim a real edit succeeded —
+see the skill's "Honesty about test coverage" note.
 
 ## Architecture
 
@@ -113,7 +133,18 @@ knowledge/        Canonical brand/voice/audience/style/learnings — markdown, g
 lib/, tools/       Deterministic code: API clients (Notion, Supabase, Apify, Instagram Graph),
                    FFmpeg/media processing, the shared Claude-call helper. No craft knowledge here —
                    just mechanism.
+
+reels/             Video-editor working directory (gitignored) — raw/, transcript.json, edl.json/edl.md,
+                   intermediate/, qa/, final/. Never commit video files here — see Phase 0's history-bloat
+                   finding for exactly why.
 ```
+
+**External tooling reused (not project dependencies, not reinstalled):** `ffmpeg`/`ffprobe` (system,
+already installed), the `media-use` skill's `hyperframes transcribe` and `transcript-cut.mjs` for
+transcription/timing and transcript-driven cuts, the `watch` skill for reference-video inspection,
+Playwright (already a project dependency via `carousel-generator`) for animated caption/overlay frame
+capture. See the `video-editing-workflow` skill for exactly how each is used and why the full HyperFrames
+composition/render system was deliberately *not* adopted for V1.
 
 ## Content model direction
 
@@ -154,12 +185,14 @@ file, `knowledge/`, `.claude/workflows/idea-to-reel.md`). **Phase 2 — Hooks: d
 in `lib/hook-evaluator.ts`/`lib/hook-rewriter.ts`/`generate-hooky-title` into `lib/claude-client.ts`).
 **Phase 3 — Reel script writer: done** (`reel-script-writing` skill; `reel-script-writer` agent;
 established the Calendar/Ideas Notion DB as the canonical content item, see "Content model direction").
+**Phase 4 — Video editor V1: done** (`video-editing-workflow` skill; `video-editor` agent; EDL format;
+consumes `reel-script-writer`'s beat-structured output. Architecture/tooling validated — no real end-to-end
+edit yet, since no raw footage exists in the repo; see the Phase 4 completion report for exactly what raw
+footage is needed for the first real test).
 
 Pending, in order:
 
-- Phase 4 — Video editor V1 (hybrid edit-plan-for-approval per D.4, FFmpeg + existing `media-use` skill
-  for transcription/captions per D.3) — consumes `reel-script-writer`'s beat-structured output
-- Phase 5 — Caption writer
+- Phase 5 — Caption writer (IG post captions — distinct from Phase 4's on-screen video captions)
 - Phase 6 — Calendar/scheduling agent
 - Phase 7 — Performance analyst + persistent learnings feedback loop
 - Phase 8 — Research/ideas improvements
@@ -184,3 +217,7 @@ Salim about which steps of that flow current tooling can actually do versus whic
   from a real voice reference (`data/own-reel-transcripts.json`), not a generic idea of "startup content."
 - Content integrity extends to scripts: never fabricate a quote/stat/citation/named-person claim — use the
   `NEEDS VERIFICATION` tag (see `reel-script-writing` skill and `knowledge/content-integrity.md`).
+- For any video-editing request, use the `video-editor` agent (see routing table above). On-screen
+  captions always use the approved script text, never an ASR guess — ASR is for timing/alignment only.
+- Don't adopt the full HyperFrames project/composition/render system for video editing without revisiting
+  that decision explicitly — V1 deliberately stayed FFmpeg-first/lean; see `video-editing-workflow` skill.

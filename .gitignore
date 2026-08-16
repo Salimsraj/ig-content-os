@@ -47,3 +47,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 public/viral-reels/
+
+# video-editor working directory (raw footage, intermediate renders, QA frames) —
+# never commit video files to git, this is exactly the 1.3GB mistake Phase 0 found and fixed
+/reels/
