@@ -1,8 +1,7 @@
 # Playbook: "Turn this idea into a Reel"
 
-Status: **target design, not yet fully implemented.** This documents the intended end-to-end flow so the
-Chief of Staff (and future implementation work) has a concrete target. Each step below notes which phase
-delivers it. Until all phases land, the Chief of Staff should do as much of this as current tooling
+Status: **steps 1–4 implemented (Phases 0–3); steps 5+ still target design.** Each step below notes which
+phase delivers it. Until all phases land, the Chief of Staff should do as much of this as current tooling
 allows and be explicit about what it can't do yet.
 
 This is the first major end-to-end milestone for the whole system.
@@ -23,8 +22,10 @@ help me make it", or an idea already sitting in the calendar with status "Idea".
 3. **Score and select a hook.** `hook-analyzer` agent (Phase 2) — scores each option on the 5 levers,
    surfaces the weakest lever and predicted skip rate; Salim picks (or asks Chief of Staff to pick the
    strongest).
-4. **Write the Reel script.** `reel-script-writer` agent (Phase 3) — full script (hook → body → CTA),
-   written into the canonical content item (see D.1 content model, formalized in Phase 3).
+4. **Write the Reel script. Done (Phase 3).** `reel-script-writer` agent — full script in the confirmed
+   beat format (`## HOOK`, `## BEAT N`, `## CTA`), grounded in `data/own-reel-transcripts.json` and the
+   knowledge layer, with `NEEDS VERIFICATION` tags on any unconfirmed claims. Storable directly in the
+   canonical content item (the Calendar/Ideas Notion DB) with no schema change.
 5. **Create the editing plan.** `video-editor` agent (Phase 4) — once raw footage exists, produces an
    edit plan/EDL (transcription via the existing `media-use` skill, silence/dead-air removal, cuts,
    captions, punch-ins/zooms, B-roll placement, audio/music treatment) and a preview, for approval —

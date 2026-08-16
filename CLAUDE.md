@@ -77,6 +77,24 @@ Both agents invoke the `hook-craft` skill as their first step — don't duplicat
 when routing; just dispatch to the right agent with the relevant context (the idea, the hook(s) in
 question, any script/description available).
 
+Note: as of Phase 2, `hook-generator` is confirmed natively discoverable as an agent type;
+`hook-analyzer` was not yet discoverable in the same session it was created in (unresolved harness-timing
+quirk, not a defect found in the file itself — re-check each new session; fall back to loading
+`.claude/agents/hook-analyzer.md` via `general-purpose` if native dispatch still fails).
+
+## Routing: script requests (Phase 3)
+
+| Salim says (examples) | Route to | Mode |
+|---|---|---|
+| "Turn this idea into a Reel" / "write the script for this hook" | `reel-script-writer` | FULL SCRIPT (only once a hook is selected — route to `hook-generator`/`hook-analyzer` first if not) |
+| "Make this script shorter" / "give me a 30-second version" | `reel-script-writer` | CONDENSE |
+| "Make this sound more like me" | `reel-script-writer` | REWRITE (re-grounds in `data/own-reel-transcripts.json`) |
+| "Rewrite the middle but keep the hook" | `reel-script-writer` | REWRITE (preserve whatever's named) |
+| "Prepare this for filming" | `reel-script-writer` | FILMING-READY |
+
+`reel-script-writer` invokes the `reel-script-writing` skill as its first step. It writes from an
+already-selected hook — it doesn't generate or pick hooks itself.
+
 ## Architecture
 
 ```
@@ -99,11 +117,26 @@ lib/, tools/       Deterministic code: API clients (Notion, Supabase, Apify, Ins
 
 ## Content model direction
 
-Target (per D.1, formalized in Phase 3): one canonical content item per Reel/post with a single source
-of truth spanning idea → hooks → selected hook → script → caption → assets → status → scheduled date →
-published post → performance. Until Phase 3 lands, the current reality is still split across two
-systems — the standalone `app/scripts` Notion library and `app/calendar`'s per-item fields — treat that
-as a known, temporary inconsistency, not the intended design.
+Target (per D.1): one canonical content item per Reel/post with a single source of truth spanning idea →
+hooks → selected hook → script → caption → assets/editing state → status → scheduled date → published
+post → performance → learnings.
+
+**Phase 3 decision: the Calendar/"Ideas" Notion DB (`NOTION_IDEAS_DB_ID`) is the canonical content item**,
+not the standalone `app/scripts` DB (`NOTION_SCRIPTS_DB_ID`). The calendar item already carries almost the
+whole model — title/hook, description, script body, caption, status pipeline (Idea → Scripting → To Film
+→ To Edit → Scheduled → Posted → Archived), post date — via `lib/notion.ts`. The standalone Scripts DB is
+legacy: not deleted (existing entries preserved), but not built on further — don't route new script work
+through `lib/scripts.ts`/`app/scripts`.
+
+`reel-script-writer` (Phase 3) writes scripts in a beat-structured format (`## HOOK`, `## BEAT N — label`,
+`## CTA`, with `>` quote-lines for visual direction / evidence flags) that stores in the calendar item's
+existing page body with zero schema change — `blockToText`/`lineToBlock` in `lib/notion.ts` already
+round-trip `##` headings and `>` quotes. This is also the format Phase 4's video editor will parse to map
+beats to timing/visual treatment/edits — don't invent a different script format later.
+
+Still open, for later phases: explicit "hook options considered" tracking (today the calendar item only
+has one Title/hook field, not a set of options with the selected one marked), assets/editing-state
+fields, and the published-post/performance/learnings links — Phase 3 only needed the script portion.
 
 ## Persistence direction
 
@@ -119,12 +152,13 @@ actually justified — don't migrate things preemptively.
 file, `knowledge/`, `.claude/workflows/idea-to-reel.md`). **Phase 2 — Hooks: done** (`hook-craft` skill;
 `hook-generator` + `hook-analyzer` agents; consolidated the previously-triplicated raw Claude-call code
 in `lib/hook-evaluator.ts`/`lib/hook-rewriter.ts`/`generate-hooky-title` into `lib/claude-client.ts`).
+**Phase 3 — Reel script writer: done** (`reel-script-writing` skill; `reel-script-writer` agent;
+established the Calendar/Ideas Notion DB as the canonical content item, see "Content model direction").
 
 Pending, in order:
 
-- Phase 3 — Reel script writer (canonical content model)
 - Phase 4 — Video editor V1 (hybrid edit-plan-for-approval per D.4, FFmpeg + existing `media-use` skill
-  for transcription/captions per D.3)
+  for transcription/captions per D.3) — consumes `reel-script-writer`'s beat-structured output
 - Phase 5 — Caption writer
 - Phase 6 — Calendar/scheduling agent
 - Phase 7 — Performance analyst + persistent learnings feedback loop
@@ -146,3 +180,7 @@ Salim about which steps of that flow current tooling can actually do versus whic
   it for any new server-side Claude call in `lib/`/`app/api/`, don't write a fourth inline copy.
 - `carousel-generator` skill is mature and self-contained — invoke it directly for carousel requests,
   no wrapper agent needed.
+- For any script-writing request, use the `reel-script-writer` agent (see routing table above). It writes
+  from a real voice reference (`data/own-reel-transcripts.json`), not a generic idea of "startup content."
+- Content integrity extends to scripts: never fabricate a quote/stat/citation/named-person claim — use the
+  `NEEDS VERIFICATION` tag (see `reel-script-writing` skill and `knowledge/content-integrity.md`).
