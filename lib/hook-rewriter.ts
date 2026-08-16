@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { callClaudeText } from "./claude-client";
 
 const CACHE_FILE = path.join(process.cwd(), "data", "cache", "hook-rewrites-live.json");
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -33,6 +34,10 @@ function hash(s: string) {
   return String(h);
 }
 
+// Same five-lever framework as lib/hook-evaluator.ts, canonically documented
+// in knowledge/hook-framework.md — kept as its own literal text here (not
+// dynamically composed) since this prompt is hand-tuned for rewriting rather
+// than scoring/generating, and is behavior-sensitive.
 const SYSTEM_PROMPT = `You rewrite the opening hook (first 1-2 spoken sentences) of Arabic/Shami-dialect short-form video scripts to reduce skip rate, using this framework:
 
 THE CORE MECHANISM: a hook works by opening a curiosity loop — an unanswered question in the viewer's head. Everything below is a lever for creating or strengthening that.
@@ -67,44 +72,8 @@ export async function generateHookRewrite(
   }
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-5",
-        max_tokens: 300,
-        system: SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: `Original hook: "${originalHook}"\nSkip rate: ${skipRate}%\nDiagnosis: ${diagnosisPattern}\nFull video transcript (for context on what comes next): "${fullTranscript.slice(0, 500)}"`,
-          },
-        ],
-        thinking: {
-          type: "disabled",
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      console.error("Anthropic API error:", await response.text());
-      return null;
-    }
-
-    const data = await response.json();
-    // Find the text content block (skipping thinking blocks) — without this,
-    // data.content?.[0] can be a thinking block instead of text, leaving
-    // `text` empty and crashing JSON.parse below.
-    const textBlock = data.content?.find((block: { type: string; text?: string }) => block.type === "text");
-    const text: string = textBlock?.text || "";
-    if (!text.trim()) {
-      console.error("Anthropic returned no text for hook rewrite. Content types:", data.content?.map((c: { type: string }) => c.type));
-      return null;
-    }
+    const userContent = `Original hook: "${originalHook}"\nSkip rate: ${skipRate}%\nDiagnosis: ${diagnosisPattern}\nFull video transcript (for context on what comes next): "${fullTranscript.slice(0, 500)}"`;
+    const text = await callClaudeText(SYSTEM_PROMPT, userContent, 300);
     const parsed = JSON.parse(text);
 
     const result: RewriteResult = {

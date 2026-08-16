@@ -1,30 +1,14 @@
-import { evaluateHook } from "@/lib/hook-evaluator";
+import { callClaudeText } from "@/lib/claude-client";
 
 export async function POST(request: Request) {
   try {
-    const { script, hook } = await request.json();
+    const { script } = await request.json();
 
     if (!script || typeof script !== "string") {
       return Response.json({ error: "Script is required" }, { status: 400 });
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
-
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-5",
-        max_tokens: 500,
-        thinking: {
-          type: "disabled",
-        },
-        system: `Create 3 short, clear Arabic/Shami video overlay titles (3-7 words) from the script.
+    const system = `Create 3 short, clear Arabic/Shami video overlay titles (3-7 words) from the script.
 
 CRITICAL: Write ONLY in Arabic/Shami. NEVER use English.
 
@@ -35,30 +19,11 @@ EXAMPLES OF GOOD TITLES (Arabic only):
 - "انجز شغل أسبوع في يوم واحد"
 - "شغل أقل، نتايج أكتر"
 
-Return JSON: {"titles": ["title 1", "title 2", "title 3"]}`,
-        messages: [
-          {
-            role: "user",
-            content: `Script: ${script}\n\nCreate 3 different hooky titles for a video overlay (first 3 seconds). Each angle should highlight a different benefit frame, but all about the same core value.`,
-          },
-        ],
-      }),
-    });
+Return JSON: {"titles": ["title 1", "title 2", "title 3"]}`;
 
-    const data = await response.json();
+    const userContent = `Script: ${script}\n\nCreate 3 different hooky titles for a video overlay (first 3 seconds). Each angle should highlight a different benefit frame, but all about the same core value.`;
 
-    if (!data.content || data.content.length === 0) {
-      console.error("No content in response:", data);
-      return Response.json({ error: "Empty API response" }, { status: 500 });
-    }
-
-    const textBlock = data.content.find((b: { type: string }) => b.type === "text");
-    const text = textBlock?.text?.trim() || "";
-
-    if (!text) {
-      console.error("No text block found. Content types:", data.content.map((c: { type: string }) => c.type));
-      return Response.json({ error: "Failed to generate titles (no text response)" }, { status: 500 });
-    }
+    const text = await callClaudeText(system, userContent, 500);
 
     try {
       const parsed = JSON.parse(text);

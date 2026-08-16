@@ -60,6 +60,23 @@ Leave both alone. Everything else in the app is already Instagram-implicit.
    status visibility, and content browsing — things where a UI genuinely helps. Don't build web UI to
    duplicate something achievable conversationally here.
 
+## Routing: hook requests (Phase 2)
+
+Natural-language hook requests route automatically — Salim should never need to name an agent. Match by
+intent, not exact phrasing:
+
+| Salim says (examples) | Route to | Not |
+|---|---|---|
+| "Give me 10 hooks for this idea" / "give me 3 different angles" / "write hooks for this script" | `hook-generator` | — |
+| "Analyze this hook" / "what's wrong with this hook" | `hook-analyzer` | — |
+| "Make this hook stronger" / "rewrite this hook" | `hook-analyzer` (analyze then propose rewrite) | not `hook-generator` — there's already a hook to work from |
+| "Which of these hooks should I use" | `hook-analyzer` (rank mode) | — |
+| "Rewrite this using what's worked on my account" | `hook-analyzer` — but check `knowledge/performance-learnings.md` first; if it's empty (true until Phase 7), say so plainly rather than quietly substituting a framework prediction | — |
+
+Both agents invoke the `hook-craft` skill as their first step — don't duplicate its instructions inline
+when routing; just dispatch to the right agent with the relevant context (the idea, the hook(s) in
+question, any script/description available).
+
 ## Architecture
 
 ```
@@ -99,11 +116,12 @@ actually justified — don't migrate things preemptively.
 ## Build status
 
 **Phase 0 — Cleanup/deduplication: done.** **Phase 1 — Knowledge layer + Chief of Staff: done** (this
-file, `knowledge/`, `.claude/workflows/idea-to-reel.md`).
+file, `knowledge/`, `.claude/workflows/idea-to-reel.md`). **Phase 2 — Hooks: done** (`hook-craft` skill;
+`hook-generator` + `hook-analyzer` agents; consolidated the previously-triplicated raw Claude-call code
+in `lib/hook-evaluator.ts`/`lib/hook-rewriter.ts`/`generate-hooky-title` into `lib/claude-client.ts`).
 
 Pending, in order:
 
-- Phase 2 — Hooks (`hook-craft` skill; `hook-generator` + `hook-analyzer` agents)
 - Phase 3 — Reel script writer (canonical content model)
 - Phase 4 — Video editor V1 (hybrid edit-plan-for-approval per D.4, FFmpeg + existing `media-use` skill
   for transcription/captions per D.3)
@@ -121,6 +139,10 @@ Salim about which steps of that flow current tooling can actually do versus whic
 - Content is Arabic, Shami dialect, with natural code-switching — never "correct" this.
 - Hook framework: the 5-lever model (contrast, context, specificity, proof, register) — see
   `knowledge/hook-framework.md`. This already grounds two live features (`lib/hook-evaluator.ts`,
-  `lib/hook-rewriter.ts`); don't invent a competing framework.
+  `lib/hook-rewriter.ts`) and the `hook-craft` skill; don't invent a competing framework.
+- For any hook request, use the `hook-generator`/`hook-analyzer` agents (see routing table above), not
+  the web app's API routes — those exist for the dashboard's own UI, not for Claude Code to shell out to.
+- `lib/claude-client.ts` is the shared Anthropic-call helper for the web app's own server-side code — use
+  it for any new server-side Claude call in `lib/`/`app/api/`, don't write a fourth inline copy.
 - `carousel-generator` skill is mature and self-contained — invoke it directly for carousel requests,
   no wrapper agent needed.

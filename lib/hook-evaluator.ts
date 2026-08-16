@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { getTopScoringHooks, getHookTemplatesSample, formatScoredHooksNumbered, formatHookTemplatesNumbered } from "./viral-hook-patterns";
+import { callClaudeJSON } from "./claude-client";
 
 const CACHE_FILE = path.join(process.cwd(), "data", "cache", "hook-evaluations.json");
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -64,18 +65,11 @@ function hash(s: string) {
   return String(h);
 }
 
-// The same five-lever framework used by lib/hook-rewriter.ts, expressed as a
-// scoring rubric instead of a rewriting instruction.
-const FRAMEWORK = `THE CORE MECHANISM: a hook works by opening a curiosity loop — an unanswered question in the viewer's head. Everything below is a lever for creating or strengthening that.
-
-FIVE LEVERS, IN PRIORITY ORDER:
-1. CONTRAST is the engine. Base state -> end state, expectation -> reality, "everyone thinks X -> actually Y". The SIZE of the gap drives curiosity, not cleverness of phrasing.
-2. CONTEXT must land immediately — who this is for and what it's about, in the first breath, before curiosity can even form. Delaying context to the back half of the first sentence raises skip rate sharply.
-3. SPECIFICITY beats a "hook-sounding" hook. A line that obviously performs the role of "hook" (generic imperative, "stop doing X") triggers ad-skepticism and gets skipped. A concrete, specific claim (a number, a named mechanism, a real instance) reads as information, not pitch.
-4. PROOF: any bold claim needs a proof signal closed fast (a number, a personal result) or it opens a worse loop: "is this even true?"
-5. REGISTER: match the audience's own language, not generic marketing-speak. Jargon the audience does not use is a skip trigger.
-
-GRAMMAR UNDERNEATH: Subject + Action + Objective + Contrast. e.g. "[I] [spent 2 hours on X] -> [Claude did it in 2 minutes]."`;
+// The full five-lever framework (this same content, canonically) lives in
+// knowledge/hook-framework.md — keep EVAL_SYSTEM/SUGGEST_SYSTEM below aligned
+// with it if the framework changes. Not read from disk here: these prompts
+// are hand-tuned per task (scoring vs. generation) and behavior-sensitive, so
+// they stay as their own literal text rather than being dynamically composed.
 
 const EVAL_SYSTEM = `You are an expert at evaluating short-form video hooks (Instagram Reels).
 
@@ -119,63 +113,6 @@ Each of the 3 suggestions must take a different structural approach so they're g
 
 Return JSON: {"suggestions": [{"hook": "...", "skipRatePrediction": 0-100, "templateIndex": 1, "hookIndex": 1, "principle": "which lever this strengthens"}]}`;
 
-async function callClaude(system: string, userContent: string, maxTokens: number) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-5",
-      max_tokens: maxTokens,
-      system,
-      messages: [{ role: "user", content: userContent }],
-      thinking: {
-        type: "disabled",
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error("Anthropic HTTP error:", response.status, errText);
-    throw new Error(`Anthropic API error (${response.status}): ${errText}`);
-  }
-
-  const data = await response.json();
-
-  // Handle Anthropic's error responses
-  if (data.error) {
-    throw new Error(`Anthropic error: ${data.error.message || JSON.stringify(data.error)}`);
-  }
-
-  // Find the text content block (skipping thinking blocks)
-  const textBlock = data.content?.find((block: { type: string; text?: string }) => block.type === "text");
-  const text: string = textBlock?.text || "";
-
-  if (!text.trim()) {
-    throw new Error(
-      `Anthropic returned no text. Content types: ${data.content?.map((c: { type: string }) => c.type).join(", ")}`
-    );
-  }
-
-  // Strip a markdown fence if the model adds one anyway.
-  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-
-  try {
-    return JSON.parse(cleaned);
-  } catch (e) {
-    console.error("JSON parse failed. Raw input (first 500 chars):", cleaned.substring(0, 500));
-    console.error("Full error:", e instanceof Error ? e.message : String(e));
-    throw new Error(`Failed to parse Claude's response: ${e instanceof Error ? e.message : String(e)}`);
-  }
-}
-
 export async function evaluateHook(hook: string): Promise<HookEvaluation> {
   const key = `eval:${hash(hook)}`;
   const cache = readCache();
@@ -184,7 +121,8 @@ export async function evaluateHook(hook: string): Promise<HookEvaluation> {
     return cached.result as HookEvaluation;
   }
 
-  const parsed = await callClaude(EVAL_SYSTEM, `Hook: "${hook}"`, 1200);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const parsed = (await callClaudeJSON(EVAL_SYSTEM, `Hook: "${hook}"`, 1200)) as any;
 
   const skipRatePrediction = Math.max(0, Math.min(100, Math.round(parsed.skipRatePrediction)));
   const result: HookEvaluation = {
@@ -241,11 +179,8 @@ Issues: ${evaluation.issues.join("; ")}
 
 Write 3 hooks, each taking a different structural approach inspired by the lists above — natural Arabic/Shami, one short sentence, real specifics from THIS script. Report which numbered item(s) inspired each one via templateIndex/hookIndex.${coreIdea ? `\n\nCORE IDEA TO PRESERVE: "${coreIdea}"` : ""}`;
 
-  const parsed = await callClaude(
-    SUGGEST_SYSTEM,
-    userMessage,
-    1800
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const parsed = (await callClaudeJSON(SUGGEST_SYSTEM, userMessage, 1800)) as any;
 
   const result: HookSuggestion[] = (parsed.suggestions ?? []).map(
     (s: {
