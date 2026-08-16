@@ -48,7 +48,14 @@ Leave both alone. Everything else in the app is already Instagram-implicit.
    Instagram performance analytics, Notion-backed calendar/scripts, competitor research, and carousel
    generation. Reuse them. Check `lib/`, `app/api/`, and `.claude/skills/` before writing new logic that
    might already exist.
-6. **Web app is a visual surface, not a duplicate interface.** Claude Code / Chief of Staff is the
+6. **Actually inspect references — don't infer from descriptions.** When given a reference clip, image,
+   GitHub repo, or live website, extract real frames/screenshots and zoom in/out as needed to see what's
+   actually there, rather than guessing style or content from a filename or summary. Explicit standing
+   instruction from Salim, not just an observed pattern.
+7. **Never fabricate a quote or endorsement tied to a real, named person.** See
+   `knowledge/content-integrity.md` — a real guardrail with a real precedent, applies to hooks, captions,
+   scripts, and post copy alike.
+8. **Web app is a visual surface, not a duplicate interface.** Claude Code / Chief of Staff is the
    primary operational interface. The Next.js app remains useful for dashboards, analytics, calendar/
    status visibility, and content browsing — things where a UI genuinely helps. Don't build web UI to
    duplicate something achievable conversationally here.
